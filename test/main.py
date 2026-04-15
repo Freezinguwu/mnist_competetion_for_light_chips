@@ -77,7 +77,7 @@ if __name__ == "__main__":
     for batch_idx, (images, labels) in enumerate(train_loader):
         # 1. 搬运到 GPU
         images, labels = images.cuda(), labels.cuda()
-        images_32 = F.interpolate(images, size=(224, 224), mode='bilinear', align_corners=False)
+        images_32 = F.interpolate(images, size=(64, 64), mode='bilinear', align_corners=False)
         # 2. 这里可以把 images_224 输入到 ResNet50 模型中，得到输出 logits
         output = model(images_32)
         # 3. 这里可以计算 Loss、跑 backward (如果你想训练的话)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         for batch_idx, (images, labels) in enumerate(test_loader):
           # 1. 搬运到 GPU
           images, labels = images.cuda(), labels.cuda()
-          images_32_TEST = F.interpolate(images, size=(224, 224), mode='bilinear', align_corners=False)
+          images_32_TEST = F.interpolate(images, size=(64, 64), mode='bilinear', align_corners=False)
           # 2. 把 images_224 输入到 ResNet50 模型中，得到输出 logits
           output = model(images_32_TEST)
           print(f"正在处理第 {batch_idx} 个测试批次...")  
