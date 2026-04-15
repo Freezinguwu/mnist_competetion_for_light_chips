@@ -10,7 +10,7 @@ import numpy as np
 import entrance
 from time import time
 from sys import argv
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet18, ResNet18_Weights
 from torch.nn import Conv2d
 from torch import Tensor
 from torch.utils.data import Subset
@@ -28,8 +28,8 @@ def get_data_loader(batch_size, num_workers):
     test_dataset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 
     # ✅ 限制数据量（比如只用1000条）----tips：调试用，正式用把这个可以删掉
-    # subset_size = 1000
-    # train_dataset = Subset(train_dataset, range(subset_size))
+    subset_size = 10000
+    train_dataset = Subset(train_dataset, range(subset_size))
     # test_dataset = Subset(test_dataset, range(300))  # 测试集可以更小
     # 创建数据加载器
     train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
@@ -46,7 +46,7 @@ def data_display():
     # 获取第一个 batch
     images, labels = next(iter(train_loader)) 
     first_img = images[0]  # 取出第一个图像
-    images_224 = F.interpolate(images, size=(32, 32), mode='bilinear', align_corners=False)
+    images_224 = F.interpolate(images, size=(224, 224), mode='bilinear', align_corners=False)
     first_img_224 = images_224[0]  # 取出第一个图像的细分版本
     print(first_img.shape)
     # --- 开始画图展示 ---
@@ -57,14 +57,14 @@ def data_display():
     # 右图：细分后的 224x224 (边缘变平滑了，像一张真正的照片)
     # 绘图需要把 [C, H, W] 转回 [H, W, C]
     axes[1].imshow(first_img_224.permute(1, 2, 0).numpy())
-    axes[1].set_title("Resized: 32x32\n(Ready for ResNet50)")
+    axes[1].set_title("Resized: 224x224\n(Ready for ResNet50)")
     plt.show()
 
 if __name__ == "__main__":
     data_display()
     # 1. 加载模型
-    model = resnet50(weights=ResNet50_Weights.DEFAULT)
-    model.fc = torch.nn.Linear(2048, 10)
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model.fc = torch.nn.Linear(512, 10)
     model.cuda()
     # 3. 移动到 GPU
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     for batch_idx, (images, labels) in enumerate(train_loader):
         # 1. 搬运到 GPU
         images, labels = images.cuda(), labels.cuda()
-        images_32 = F.interpolate(images, size=(32, 32), mode='bilinear', align_corners=False)
+        images_32 = F.interpolate(images, size=(224, 224), mode='bilinear', align_corners=False)
         # 2. 这里可以把 images_224 输入到 ResNet50 模型中，得到输出 logits
         output = model(images_32)
         # 3. 这里可以计算 Loss、跑 backward (如果你想训练的话)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         for batch_idx, (images, labels) in enumerate(test_loader):
           # 1. 搬运到 GPU
           images, labels = images.cuda(), labels.cuda()
-          images_32_TEST = F.interpolate(images, size=(32, 32), mode='bilinear', align_corners=False)
+          images_32_TEST = F.interpolate(images, size=(224, 224), mode='bilinear', align_corners=False)
           # 2. 把 images_224 输入到 ResNet50 模型中，得到输出 logits
           output = model(images_32_TEST)
           print(f"正在处理第 {batch_idx} 个测试批次...")  
@@ -121,8 +121,8 @@ if __name__ == "__main__":
     print("time cost: ", end - start)
 
     # 在训练完成后（测试之前或之后）添加
-    torch.save(model.state_dict(), 'resnet50_mnist.pth')
-    print("模型已保存为 resnet50_mnist.pth")
+    torch.save(model.state_dict(), 'resnet18_mnist.pth')
+    print("模型已保存为 resnet18_mnist.pth")
 
 
 
